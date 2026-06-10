@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fable 5 — Anthropic's Most Capable Model, Explained</title>
+<meta name="description" content="An interactive deep-dive into Claude Fable 5: what it can do, how to use it effectively, how to build a business on it, and the creative frontier it opens." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c0b0f;
+  --ink-2:#141319;
+  --ink-3:#1c1a23;
+  --paper:#f3efe6;
+  --paper-dim:#c9c3b4;
+  --gold:#e8b04b;
+  --gold-soft:#f0c97e;
+  --ember:#d4663a;
+  --teal:#5fb8a5;
+  --line:rgba(243,239,230,.12);
+  --radius:18px;
+  --serif:'Fraunces', Georgia, serif;
+  --sans:'Space Grotesk', system-ui, sans-serif;
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--sans);
+  line-height:1.6;
+  overflow-x:hidden;
+}
+::selection{background:var(--gold);color:var(--ink)}
+
+/* ---------- progress bar ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--gold),var(--ember));z-index:1000;transition:width .1s linear}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 5vw;
+  backdrop-filter:blur(14px);
+  background:rgba(12,11,15,.7);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s;
+}
+nav.scrolled{border-bottom-color:var(--line)}
+.logo{font-family:var(--serif);font-weight:600;font-size:1.25rem;letter-spacing:.02em;color:var(--paper);text-decoration:none}
+.logo em{color:var(--gold);font-style:italic}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--paper-dim);text-decoration:none;font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--gold)}
+@media(max-width:860px){.nav-links{display:none}}
+
+/* ---------- hero ---------- */
+header{
+  min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;position:relative;padding:120px 6vw 80px;
+}
+#constellation{position:absolute;inset:0;z-index:0;opacity:.55}
+.hero-inner{position:relative;z-index:1;max-width:1000px}
+.kicker{
+  display:inline-block;font-family:var(--mono);font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--gold);border:1px solid rgba(232,176,75,.35);padding:8px 18px;border-radius:99px;margin-bottom:34px;
+  background:rgba(232,176,75,.06);
+}
+h1{
+  font-family:var(--serif);font-weight:380;font-size:clamp(3rem,8vw,6.4rem);line-height:1.02;letter-spacing:-.02em;
+}
+h1 .accent{font-style:italic;font-weight:560;background:linear-gradient(110deg,var(--gold) 20%,var(--ember) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{max-width:640px;margin:32px auto 0;color:var(--paper-dim);font-size:1.12rem;font-weight:300}
+.hero-cta{margin-top:44px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn{
+  font-family:var(--sans);font-size:.95rem;padding:14px 30px;border-radius:99px;cursor:pointer;text-decoration:none;
+  transition:transform .2s,box-shadow .2s;display:inline-block;
+}
+.btn-gold{background:var(--gold);color:var(--ink);font-weight:600;border:none}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,176,75,.35)}
+.btn-ghost{background:transparent;color:var(--paper);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:var(--paper-dim);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+
+/* hero stat strip */
+.stat-strip{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:64px;
+}
+.stat{background:var(--ink-2);padding:26px 18px;text-align:center}
+.stat .num{font-family:var(--serif);font-size:2.1rem;color:var(--gold);font-weight:500}
+.stat .lbl{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim);margin-top:6px}
+
+/* ---------- sections ---------- */
+section{padding:110px 6vw;max-width:1240px;margin:0 auto}
+.sec-head{margin-bottom:56px;max-width:760px}
+.sec-num{font-family:var(--mono);color:var(--ember);font-size:.8rem;letter-spacing:.3em}
+h2{font-family:var(--serif);font-weight:420;font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.1;margin:14px 0 18px;letter-spacing:-.01em}
+h2 em{font-style:italic;color:var(--gold)}
+.sec-head p{color:var(--paper-dim);font-size:1.05rem;font-weight:300}
+
+.reveal{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* ---------- capability cards ---------- */
+.grid{display:grid;gap:20px}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{
+  background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:30px;
+  transition:transform .25s,border-color .25s;position:relative;overflow:hidden;
+}
+.card:hover{transform:translateY(-4px);border-color:rgba(232,176,75,.4)}
+.card .icon{font-size:1.6rem;margin-bottom:14px;display:block}
+.card h3{font-family:var(--serif);font-weight:500;font-size:1.3rem;margin-bottom:10px}
+.card p{color:var(--paper-dim);font-size:.95rem;font-weight:300}
+.card .tag{
+  display:inline-block;margin-top:16px;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  color:var(--teal);border:1px solid rgba(95,184,165,.3);padding:4px 10px;border-radius:99px;
+}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
+.tab-btn{
+  background:var(--ink-2);border:1px solid var(--line);color:var(--paper-dim);padding:10px 22px;border-radius:99px;
+  cursor:pointer;font-family:var(--sans);font-size:.88rem;transition:all .2s;
+}
+.tab-btn:hover{color:var(--paper)}
+.tab-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
+.tab-panel{display:none;animation:fadein .4s ease}
+.tab-panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- effort dial ---------- */
+.effort-wrap{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:40px;margin-top:10px}
+.effort-track{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:26px 0 30px}
+.effort-stop{
+  text-align:center;padding:16px 6px;border-radius:12px;border:1px solid var(--line);cursor:pointer;
+  font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;color:var(--paper-dim);transition:all .2s;background:var(--ink-3);
+}
+.effort-stop:hover{border-color:var(--gold-soft)}
+.effort-stop.on{background:linear-gradient(135deg,rgba(232,176,75,.22),rgba(212,102,58,.16));border-color:var(--gold);color:var(--gold);font-weight:600}
+.effort-detail{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start}
+@media(max-width:760px){.effort-detail{grid-template-columns:1fr}}
+.effort-detail h4{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:var(--gold);margin-bottom:10px}
+.effort-detail p{color:var(--paper-dim);font-size:.97rem}
+.meter{margin-top:18px}
+.meter .row{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-dim)}
+.meter .row span{width:110px;flex-shrink:0}
+.bar{flex:1;height:8px;background:var(--ink);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* ---------- calculator ---------- */
+.calc{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:40px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+@media(max-width:820px){.calc-grid{grid-template-columns:1fr}}
+.calc label{display:block;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim);margin:22px 0 10px}
+.calc input[type=range]{width:100%;accent-color:var(--gold)}
+.calc .val{font-family:var(--mono);color:var(--gold);font-size:.95rem}
+.calc-out{background:var(--ink-3);border-radius:14px;padding:30px;display:flex;flex-direction:column;justify-content:center}
+.calc-out .big{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.4rem);color:var(--gold);font-weight:500}
+.calc-out .sub{color:var(--paper-dim);font-size:.9rem;margin-top:6px}
+.calc-out hr{border:none;border-top:1px solid var(--line);margin:22px 0}
+.calc-out .line{display:flex;justify-content:space-between;font-size:.9rem;color:var(--paper-dim);margin:6px 0}
+.calc-out .line b{color:var(--paper);font-family:var(--mono);font-weight:600}
+.note{font-size:.8rem;color:var(--paper-dim);margin-top:18px;opacity:.8}
+
+/* ---------- code ---------- */
+pre{
+  background:#0a0910;border:1px solid var(--line);border-radius:14px;padding:26px;overflow-x:auto;
+  font-family:var(--mono);font-size:.84rem;line-height:1.7;position:relative;
+}
+code .c{color:#6e6a7a}code .k{color:var(--ember)}code .s{color:var(--gold-soft)}code .f{color:var(--teal)}code .n{color:#c9b8f0}
+.copy-btn{
+  position:absolute;top:12px;right:12px;background:var(--ink-3);border:1px solid var(--line);color:var(--paper-dim);
+  font-family:var(--mono);font-size:.68rem;padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .2s;
+}
+.copy-btn:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ---------- playbook accordion ---------- */
+.acc{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--ink-2)}
+.acc-item+.acc-item{border-top:1px solid var(--line)}
+.acc-head{
+  width:100%;text-align:left;background:none;border:none;color:var(--paper);font-family:var(--sans);
+  font-size:1.05rem;padding:24px 28px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;
+  transition:color .2s;
+}
+.acc-head:hover{color:var(--gold)}
+.acc-head .plus{font-family:var(--serif);font-size:1.5rem;color:var(--gold);transition:transform .3s;flex-shrink:0}
+.acc-item.open .plus{transform:rotate(45deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.acc-body-inner{padding:0 28px 28px;color:var(--paper-dim);font-size:.95rem;font-weight:300}
+.acc-body-inner .snippet{
+  margin-top:14px;background:#0a0910;border-left:3px solid var(--gold);padding:16px 18px;border-radius:0 10px 10px 0;
+  font-family:var(--mono);font-size:.8rem;color:var(--gold-soft);white-space:pre-wrap;
+}
+
+/* ---------- money table ---------- */
+.money-card{display:flex;flex-direction:column}
+.money-card .head-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.diff{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;padding:4px 10px;border-radius:99px;flex-shrink:0}
+.diff.easy{color:var(--teal);border:1px solid rgba(95,184,165,.4)}
+.diff.med{color:var(--gold);border:1px solid rgba(232,176,75,.4)}
+.diff.hard{color:var(--ember);border:1px solid rgba(212,102,58,.4)}
+.money-card ul{margin-top:14px;padding-left:18px;color:var(--paper-dim);font-size:.9rem;font-weight:300}
+.money-card li{margin:6px 0}
+
+/* ---------- creative marquee ---------- */
+.marquee{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;margin:0 -6vw}
+.marquee-track{display:flex;gap:48px;white-space:nowrap;animation:scroll 38s linear infinite;width:max-content}
+.marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-track span{font-family:var(--serif);font-style:italic;font-size:1.3rem;color:var(--paper-dim)}
+.marquee-track span b{color:var(--gold);font-weight:500}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- quiz ---------- */
+.quiz{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);padding:40px}
+.quiz-q{font-family:var(--serif);font-size:1.35rem;font-weight:500;margin-bottom:24px}
+.quiz-opts{display:grid;gap:12px}
+.quiz-opt{
+  text-align:left;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:16px 20px;
+  color:var(--paper);font-family:var(--sans);font-size:.95rem;cursor:pointer;transition:all .2s;
+}
+.quiz-opt:hover{border-color:var(--gold-soft)}
+.quiz-opt.right{border-color:var(--teal);background:rgba(95,184,165,.12)}
+.quiz-opt.wrong{border-color:var(--ember);background:rgba(212,102,58,.12)}
+.quiz-exp{margin-top:20px;color:var(--paper-dim);font-size:.92rem;display:none;border-left:3px solid var(--teal);padding-left:16px}
+.quiz-foot{display:flex;justify-content:space-between;align-items:center;margin-top:26px}
+.quiz-score{font-family:var(--mono);font-size:.82rem;color:var(--gold)}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);padding:60px 6vw;text-align:center;color:var(--paper-dim);font-size:.85rem}
+footer a{color:var(--gold);text-decoration:none}
+.fineprint{max-width:760px;margin:14px auto 0;font-size:.74rem;opacity:.7}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav id="nav">
+  <a class="logo" href="#top">Claude <em>Fable&nbsp;5</em></a>
+  <ul class="nav-links">
+    <li><a href="#capabilities">Capabilities</a></li>
+    <li><a href="#under-hood">Under the Hood</a></li>
+    <li><a href="#playbook">Playbook</a></li>
+    <li><a href="#money">Earn</a></li>
+    <li><a href="#creative">Create</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header id="top">
+  <canvas id="constellation"></canvas>
+  <div class="hero-inner">
+    <span class="kicker">Anthropic · Mythos-class · claude-fable-5</span>
+    <h1>The model that works<br/>like a <span class="accent">colleague</span>,<br/>not a chatbot.</h1>
+    <p class="hero-sub">Claude Fable 5 is Anthropic's most capable widely released model — the first of the Claude 5 family, built for the hardest reasoning and the longest-running autonomous work. This is your field guide: what it does, how to drive it, and what to build with it.</p>
+    <div class="hero-cta">
+      <a class="btn btn-gold" href="#capabilities">Explore what it can do</a>
+      <a class="btn btn-ghost" href="#playbook">Skip to the playbook</a>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><div class="num" data-count="1" data-suffix="M">0</div><div class="lbl">Token context window</div></div>
+      <div class="stat"><div class="num" data-count="128" data-suffix="K">0</div><div class="lbl">Max output tokens</div></div>
+      <div class="stat"><div class="num" data-count="5" data-suffix="">0</div><div class="lbl">Effort levels, low → max</div></div>
+      <div class="stat"><div class="num" data-count="15" data-suffix="+ min">0</div><div class="lbl">Single-turn deep work, normal</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ================= CAPABILITIES ================= -->
+<section id="capabilities">
+  <div class="sec-head reveal">
+    <div class="sec-num">01 — CAPABILITIES</div>
+    <h2>Don't test it on yesterday's tasks.<br/><em>Give it the hard ones.</em></h2>
+    <p>Fable 5's biggest gains are on work <strong>above</strong> what prior models could do. Teams with the best results gave it their hardest unsolved problems first — let it scope the problem, ask questions, then execute.</p>
+  </div>
+  <div class="grid grid-3">
+    <div class="card reveal"><span class="icon">🌙</span><h3>Long-horizon autonomy</h3><p>State-of-the-art on long, autonomous agentic runs — complex refactors and overnight builds that finish without human correction. Give the full spec up front in one well-specified turn and let it run.</p><span class="tag">overnight runs</span></div>
+    <div class="card reveal"><span class="icon">🏗️</span><h3>First-shot system builds</h3><p>Hand it a well-specified design and it can deliver a working implementation in one pass — gathering context, building, and self-verifying inside a single long turn.</p><span class="tag">spec → working code</span></div>
+    <div class="card reveal"><span class="icon">📊</span><h3>End-to-end knowledge work</h3><p>Financial analysis, spreadsheets, slide decks, formatted documents — full enterprise deliverables produced and checked end-to-end, not just drafted.</p><span class="tag">deliverables, not drafts</span></div>
+    <div class="card reveal"><span class="icon">🔍</span><h3>Code review &amp; debugging</h3><p>Stronger real-bug finding with clearer explanations — including repository-history search to trace when and why a defect was introduced.</p><span class="tag">finds the real bug</span></div>
+    <div class="card reveal"><span class="icon">👁️</span><h3>Vision on hard images</h3><p>Dense charts, degraded scans, flipped or blurry photos — it's explicitly trained to reach for crop and shell tools to clean up an image before reading it. High-resolution input, no downscaling cap.</p><span class="tag">degraded-input vision</span></div>
+    <div class="card reveal"><span class="icon">🕸️</span><h3>Parallel sub-agents</h3><p>Delegation is dependable now. It sustains ongoing, asynchronous communication with long-running sub-agents and peer agents — an orchestrator that actually orchestrates.</p><span class="tag">multi-agent native</span></div>
+    <div class="card reveal"><span class="icon">🧭</span><h3>Navigating ambiguity</h3><p>Performs notably better when it understands <em>why</em> you're asking. It connects a task to relevant context instead of guessing intent — and asks sharp questions when the brief is genuinely unclear.</p><span class="tag">intent-aware</span></div>
+    <div class="card reveal"><span class="icon">🧠</span><h3>Thinking, always on</h3><p>Reasoning is built in and adaptive — the model decides how deeply to think per request. You steer depth with one parameter (<code style="font-family:var(--mono);color:var(--gold)">effort</code>), from quick passes to maximum rigor.</p><span class="tag">adaptive reasoning</span></div>
+    <div class="card reveal"><span class="icon">📓</span><h3>Memory that compounds</h3><p>Give it a place to write notes — even a plain markdown file — and it gets measurably better over time, recording corrections and confirmed approaches for future sessions.</p><span class="tag">learns your project</span></div>
+  </div>
+</section>
+
+<!-- ================= UNDER THE HOOD ================= -->
+<section id="under-hood">
+  <div class="sec-head reveal">
+    <div class="sec-num">02 — UNDER THE HOOD</div>
+    <h2>What's actually <em>different</em> about it.</h2>
+    <p>Fable 5 isn't just "Opus but bigger." Several things changed at the API level — knowing them is the difference between fighting the model and flying it.</p>
+  </div>
+
+  <div class="tabs reveal" id="hood-tabs">
+    <button class="tab-btn active" data-tab="t-thinking">Thinking</button>
+    <button class="tab-btn" data-tab="t-effort">Effort dial</button>
+    <button class="tab-btn" data-tab="t-tokens">New tokenizer</button>
+    <button class="tab-btn" data-tab="t-safety">Safety &amp; refusals</button>
+    <button class="tab-btn" data-tab="t-cost">Cost calculator</button>
+  </div>
+
+  <!-- Thinking -->
+  <div class="tab-panel active" id="t-thinking">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Always-on, protected reasoning</h3>
+        <p>Thinking can't be turned off on Fable 5 — adaptive reasoning is part of how the model works. You never see the raw chain of thought (it's protected); instead you can request a readable <em>summary</em> of the reasoning, or leave it omitted for speed-of-display. Either way, the thinking happens and informs the answer.</p>
+        <p style="margin-top:12px">Practical upshot: stop budgeting "thinking tokens." Steer depth with <span style="font-family:var(--mono);color:var(--gold)">effort</span>, and if your app shows reasoning to users, ask for the summarized display so they see progress instead of a long pause.</p>
+      </div>
+      <div>
+        <pre><button class="copy-btn" data-copy="t-thinking-code">copy</button><code id="t-thinking-code"><span class="c"># Python — minimal Fable 5 call</span>
+<span class="k">import</span> anthropic
+client = anthropic.<span class="f">Anthropic</span>()
+
+response = client.messages.<span class="f">create</span>(
+    model=<span class="s">"claude-fable-5"</span>,
+    max_tokens=<span class="n">16000</span>,
+    <span class="c"># no `thinking` param — it's always on.</span>
+    <span class="c"># (an explicit disabled/budget config is rejected)</span>
+    output_config={<span class="s">"effort"</span>: <span class="s">"high"</span>},
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>,
+               <span class="s">"content"</span>: <span class="s">"Design a rate limiter for..."</span>}],
+)
+
+<span class="c"># always check stop_reason before reading content</span>
+<span class="k">if</span> response.stop_reason == <span class="s">"refusal"</span>:
+    handle_refusal(response.stop_details)
+<span class="k">else</span>:
+    <span class="f">print</span>(response.content[<span class="n">0</span>].text)</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Effort -->
+  <div class="tab-panel" id="t-effort">
+    <div class="effort-wrap">
+      <p style="color:var(--paper-dim)">The <b style="color:var(--gold)">effort parameter</b> is your single most important control: it sets how much the model thinks <em>and</em> acts. Click a level to see when to use it. Surprise: <em>low</em> on Fable 5 often beats <em>max</em> on previous-generation models.</p>
+      <div class="effort-track" id="effort-track">
+        <div class="effort-stop" data-e="0">low</div>
+        <div class="effort-stop" data-e="1">medium</div>
+        <div class="effort-stop on" data-e="2">high</div>
+        <div class="effort-stop" data-e="3">xhigh</div>
+        <div class="effort-stop" data-e="4">max</div>
+      </div>
+      <div class="effort-detail">
+        <div>
+          <h4 id="effort-name">high — the everyday default</h4>
+          <p id="effort-desc">The recommended starting point for most tasks. Strong reasoning, excellent verification behavior, and a sensible token bill. Start here, then sweep up or down per route based on your own evals.</p>
+        </div>
+        <div class="meter">
+          <div class="row"><span>Intelligence</span><div class="bar"><i id="m-int" style="width:75%"></i></div></div>
+          <div class="row"><span>Speed</span><div class="bar"><i id="m-spd" style="width:55%"></i></div></div>
+          <div class="row"><span>Cost control</span><div class="bar"><i id="m-cst" style="width:55%"></i></div></div>
+          <div class="row"><span>Best for</span><div style="flex:1;font-size:.8rem;color:var(--gold);font-family:var(--mono);text-transform:none;letter-spacing:0" id="m-for">most tasks — the default</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tokenizer -->
+  <div class="tab-panel" id="t-tokens">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>A new tokenizer — re-baseline everything</h3>
+        <p>Fable 5 tokenizes the same content into roughly <b style="color:var(--gold)">30% more tokens</b> than Opus-tier models. Billing is per token, so an unchanged workload costs more after migration even before the price difference — and any <span style="font-family:var(--mono)">max_tokens</span>, context budgets, or cost dashboards calibrated on older models are now wrong.</p>
+        <p style="margin-top:12px">The fix is one call: the token-counting endpoint returns counts under <em>both</em> tokenizers when you pass the Fable 5 model ID, so you can measure the delta on your own prompts before switching anything.</p>
+      </div>
+      <div>
+        <pre><button class="copy-btn" data-copy="t-tok-code">copy</button><code id="t-tok-code"><span class="c"># measure the tokenizer delta on YOUR prompts</span>
+resp = client.messages.<span class="f">count_tokens</span>(
+    model=<span class="s">"claude-fable-5"</span>,
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: my_prompt}],
+)
+<span class="f">print</span>(resp.input_tokens)                  <span class="c"># new tokenizer (billed)</span>
+<span class="f">print</span>(resp.input_tokens_prior_tokenizer)  <span class="c"># prior generation</span></code></pre>
+        <p class="note">Rule of thumb: don't reuse <em>any</em> token math from another model. Re-measure, then set budgets.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety -->
+  <div class="tab-panel" id="t-safety">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>The <span style="font-family:var(--mono);color:var(--gold)">refusal</span> stop reason</h3>
+        <p>Fable 5 runs safety classifiers on requests (targeting research biology and most cybersecurity content). A declined request still returns HTTP 200 — but with <span style="font-family:var(--mono)">stop_reason: "refusal"</span> and an empty or partial content array. Code that blindly reads <span style="font-family:var(--mono)">content[0]</span> will crash on it.</p>
+        <p style="margin-top:12px">Benign adjacent work can occasionally trip a false positive, so production apps configure a <b>fallback</b>: the beta <span style="font-family:var(--mono)">fallbacks</span> parameter retries the same request server-side on Opus 4.8 in one round trip.</p>
+      </div>
+      <div class="card">
+        <h3>Two operational requirements</h3>
+        <p><b style="color:var(--gold)">Data retention.</b> Fable 5 requires 30-day data retention — it's not available under zero-data-retention configurations. If every request 400s with a valid payload, check the org's retention setting before debugging the request.</p>
+        <p style="margin-top:12px"><b style="color:var(--gold)">Plan for long turns.</b> A single request on a hard task can legitimately run many minutes. Build with streaming, generous timeouts, and async check-ins — don't block a web request on a 15-minute reasoning run.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <div class="tab-panel" id="t-cost">
+    <div class="calc">
+      <div class="calc-grid">
+        <div>
+          <p style="color:var(--paper-dim)">Pricing: <b style="color:var(--gold)">$10 / 1M input</b> tokens, <b style="color:var(--gold)">$50 / 1M output</b> tokens. Drag to estimate a workload. Prompt caching can cut repeated-context input cost by up to ~90%; the Batch API halves everything for non-urgent jobs.</p>
+          <label>Input tokens per request <span class="val" id="v-in">20,000</span></label>
+          <input type="range" id="r-in" min="1000" max="500000" step="1000" value="20000">
+          <label>Output tokens per request <span class="val" id="v-out">4,000</span></label>
+          <input type="range" id="r-out" min="500" max="128000" step="500" value="4000">
+          <label>Requests per day <span class="val" id="v-req">50</span></label>
+          <input type="range" id="r-req" min="1" max="5000" step="1" value="50">
+          <label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--paper)">
+            <input type="checkbox" id="c-cache" style="accent-color:var(--gold);width:18px;height:18px"> Assume 80% of input served from cache (~0.1× price)
+          </label>
+        </div>
+        <div class="calc-out">
+          <div class="big" id="o-day">$3.40</div>
+          <div class="sub">estimated per day</div>
+          <hr/>
+          <div class="line"><span>Per request</span><b id="o-req">$0.40</b></div>
+          <div class="line"><span>Per month (30d)</span><b id="o-mo">$102.00</b></div>
+          <div class="line"><span>Input share</span><b id="o-in">$0.20</b></div>
+          <div class="line"><span>Output share</span><b id="o-out">$0.20</b></div>
+        </div>
+      </div>
+      <p class="note">Estimates only — actual usage varies with thinking depth, tool calls, and the new tokenizer (~30% more tokens than Opus-tier for the same text). Verify against your own <span style="font-family:var(--mono)">usage</span> objects.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PLAYBOOK ================= -->
+<section id="playbook">
+  <div class="sec-head reveal">
+    <div class="sec-num">03 — THE PLAYBOOK</div>
+    <h2>How to get <em>10×</em> out of it.</h2>
+    <p>These are the patterns Anthropic's own migration guidance recommends — distilled into eight habits. Each one includes a snippet you can paste straight into a system prompt or first message.</p>
+  </div>
+
+  <div class="acc reveal" id="playbook-acc">
+    <div class="acc-item open">
+      <button class="acc-head">1 · Front-load the whole spec — then get out of the way<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Fable 5's long-horizon coherence comes from intelligent planning against a clear goal. Drip-feeding requirements across ten turns wastes that. Put the task, the intent, the constraints, and what "done" looks like in the <b>first</b> message, run at high effort, and let it work.
+        <div class="snippet">I'm working on [the larger task] for [who it's for]. They need [what the output enables]. Done means: [checkable criteria]. Constraints: [list]. With that in mind: [request].</div>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">2 · Give the reason, not just the request<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Fable 5 performs measurably better when it understands the intent behind a task — it connects the work to relevant context instead of inferring your goal. Two extra sentences of "why" routinely change the quality of "what."
+        <div class="snippet">Context: this report goes to non-technical executives deciding next quarter's budget. They care about trend direction and risk, not methodology. Now — analyze this dataset.</div>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">3 · Sweep the effort dial — including downward<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Default to <b>high</b>; reserve <b>xhigh</b> for the most capability-sensitive work. But test <b>low</b> and <b>medium</b> on routine routes — lower effort on Fable 5 often exceeds the max-effort output of previous-generation models, at a fraction of the latency and cost. The relationship isn't monotonic: more effort up front can <i>reduce</i> total cost on agentic work by cutting turn count.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">4 · De-prescribe your old prompts<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Prompts written for prior models are usually too prescriptive for Fable 5 and actively <b>reduce</b> output quality. Step-by-step scaffolding, "CRITICAL: YOU MUST" tool nudges, forced progress updates — A/B test removing them. State the goal and the constraints; skip enumerating the steps.
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">5 · Ground its progress claims in evidence<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        On long autonomous runs, require every status claim to be auditable against a tool result. In Anthropic's testing this nearly eliminated fabricated progress reports on tasks designed to elicit them.
+        <div class="snippet">Before reporting progress, audit each claim against a tool result from this session. Only report work you can point to evidence for; if something is not yet verified, say so explicitly. If tests fail, say so with the output.</div>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">6 · Give it a memory file<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Even a plain <span style="font-family:var(--mono)">NOTES.md</span> makes it better over time. Tell it where the file lives, to consult it at session start, and give it a format. It will record corrections, confirmed approaches, and project quirks — and actually use them next time.
+        <div class="snippet">Store one lesson per file with a one-line summary at the top. Record corrections and confirmed approaches alike, including why they mattered. Update an existing note rather than duplicating; delete notes that turn out wrong.</div>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">7 · Let it delegate — asynchronously<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        Older models needed guardrails <i>against</i> sub-agent sprawl. Fable 5 is the opposite: parallel sub-agents are dependable, and async delegation (orchestrator keeps working while sub-agents run) beats spawn-and-block on both speed and cost.
+        <div class="snippet">Delegate independent subtasks to sub-agents and keep working while they run. Intervene if a sub-agent goes off track or is missing relevant context.</div>
+      </div></div>
+    </div>
+    <div class="acc-item">
+      <button class="acc-head">8 · Set explicit boundaries &amp; verification loops<span class="plus">+</span></button>
+      <div class="acc-body"><div class="acc-body-inner">
+        High capability cuts both ways: at high effort it can over-deliver — unrequested refactors, adjacent actions you didn't ask for. Say what it should <i>not</i> do, and for long builds, have it construct its own checking harness with fresh-context verifier sub-agents (they outperform self-critique).
+        <div class="snippet">Don't add features, refactor, or introduce abstractions beyond what the task requires. Establish a method for checking your own work as you build; run it on a regular cadence, verifying against the specification with sub-agents.</div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MONEY ================= -->
+<section id="money">
+  <div class="sec-head reveal">
+    <div class="sec-num">04 — EARNING WITH IT</div>
+    <h2>Turning capability into <em>income</em>.</h2>
+    <p>The honest framing first: Fable 5 doesn't print money — it compresses skilled labor. Every model below works because the model does in hours what used to take days, and you sell the outcome, not the tokens. Margins live in the gap between what clients pay for results and what compute costs you (see the calculator above).</p>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Productized services</h3><span class="diff easy">LOW BARRIER</span></div>
+      <p>Sell a fixed-scope deliverable — not hours. Fable 5's end-to-end knowledge work (analysis → spreadsheet → deck → memo) means one person can run an agency-shaped offer.</p>
+      <ul>
+        <li>Financial model + investor-deck packages for startups</li>
+        <li>Competitive research reports with sourced citations</li>
+        <li>"Codebase audit in 72 hours" for dev teams</li>
+        <li>Contract / policy summarization for small firms</li>
+      </ul>
+    </div>
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Freelance, amplified</h3><span class="diff easy">LOW BARRIER</span></div>
+      <p>Keep your existing freelance lane, but quote on outcomes and use Fable 5 as your back office. The win is throughput: take three clients where you used to take one — quality-checked by you, every time.</p>
+      <ul>
+        <li>Technical writing &amp; documentation overhauls</li>
+        <li>Data cleaning + analysis gigs (it verifies its own work)</li>
+        <li>Localization passes with a native-speaker review layer</li>
+        <li>Grant and proposal drafting for nonprofits</li>
+      </ul>
+    </div>
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Vertical AI products</h3><span class="diff med">MEDIUM</span></div>
+      <p>Wrap the API in a workflow a specific industry already pays for. The moat isn't the model — it's your domain data, integrations, and distribution. Charge per outcome or per seat.</p>
+      <ul>
+        <li>Lease-abstraction tool for commercial real estate</li>
+        <li>Compliance-doc checker for a regulated niche</li>
+        <li>Customer-support triage trained on a vertical's tickets</li>
+        <li>Use prompt caching + Batch API to keep COGS low</li>
+      </ul>
+    </div>
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Autonomous agent services</h3><span class="diff med">MEDIUM</span></div>
+      <p>Fable 5's long-horizon reliability makes "agent does the whole job overnight" a sellable SLA for the first time. Scheduled agents (cron-fired sessions) run without you in the loop.</p>
+      <ul>
+        <li>Nightly code-review &amp; PR-triage bots for eng teams</li>
+        <li>Weekly competitor / market monitoring digests</li>
+        <li>Automated QA sweeps with evidence-linked reports</li>
+        <li>Bill monthly; your cost is per-run compute</li>
+      </ul>
+    </div>
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Consulting &amp; enablement</h3><span class="diff med">MEDIUM</span></div>
+      <p>Most companies are still prompting Fable 5 like it's 2023. Everything in the Playbook section above is billable knowledge: effort tuning, de-prescribing prompts, agent architecture, cost engineering.</p>
+      <ul>
+        <li>Migration engagements (older models → Fable 5)</li>
+        <li>Prompt &amp; eval audits with before/after metrics</li>
+        <li>Internal workshops — sell the playbook, twice</li>
+        <li>Retainers for ongoing agent-ops</li>
+      </ul>
+    </div>
+    <div class="card money-card reveal">
+      <div class="head-row"><h3>Content &amp; education engines</h3><span class="diff hard">CROWDED</span></div>
+      <p>Pure AI content is a race to the bottom — but AI-<i>assisted</i> expertise compounds. Use Fable 5 for research depth and drafting; your taste, niche, and audience are the product.</p>
+      <ul>
+        <li>Deep-dive newsletters in a niche you actually know</li>
+        <li>Course production: it drafts, you teach</li>
+        <li>YouTube research pipelines (scripts, fact-checks, cuts)</li>
+        <li>Differentiate on judgment, not volume</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card reveal" style="margin-top:24px;border-color:rgba(232,176,75,.35)">
+    <h3 style="color:var(--gold)">The unit-economics habit</h3>
+    <p>Before launching anything: estimate cost-per-job with the calculator above, price the outcome at what the <em>labor</em> used to cost, and keep the spread. Example: a research report that costs you ~$4 in compute and 1 hour of review, sold at $400, is a real business. A $0.02 API wrapper sold at $0.05 is a hobby. Cache aggressively, batch what isn't urgent, and run routine routes at lower effort.</p>
+  </div>
+</section>
+
+<!-- ================= CREATIVE ================= -->
+<section id="creative" style="padding-bottom:60px">
+  <div class="sec-head reveal">
+    <div class="sec-num">05 — THE CREATIVE FRONTIER</div>
+    <h2>Uses nobody's <em>bored of</em> yet.</h2>
+    <p>A 1M-token context, dependable sub-agents, real memory, and minutes-long deep reasoning unlock genres of project that simply weren't possible before. Steal any of these.</p>
+  </div>
+</section>
+
+<div class="marquee reveal">
+  <div class="marquee-track" id="marquee-track">
+    <span>📚 feed it your <b>entire novel draft</b> and get a developmental edit in one pass</span>
+    <span>🏛️ a <b>family-archive historian</b> that reads decades of letters, photos &amp; scans</span>
+    <span>🎲 a persistent <b>D&amp;D dungeon master</b> with a memory file per campaign</span>
+    <span>🧬 <b>codebase archaeology</b> — “when did this bug culture start, and why?”</span>
+    <span>🎼 a <b>songwriting partner</b> that tracks your catalog’s themes across years</span>
+    <span>🗣️ a <b>debate sparring partner</b> that argues the strongest version of the other side</span>
+    <span>🏠 a <b>renovation copilot</b> reading quotes, codes &amp; floor plans together</span>
+    <span>🌍 a <b>language tutor</b> that remembers every mistake you've ever made</span>
+  </div>
+</div>
+
+<section style="padding-top:60px">
+  <div class="grid grid-3">
+    <div class="card reveal"><span class="icon">🗂️</span><h3>Whole-corpus companions</h3><p>The 1M context means "upload everything" is a real workflow: your full thesis plus every source, a company's entire policy library, ten years of journal entries. Then converse with the whole thing at once — cross-referencing, contradicting, connecting.</p></div>
+    <div class="card reveal"><span class="icon">🎭</span><h3>Living simulations</h3><p>Run a writers'-room of sub-agents: one drafts, one plays the skeptical editor, one fact-checks against your research notes, one guards continuity. The orchestrator pattern that powers engineering agents works just as well for fiction.</p></div>
+    <div class="card reveal"><span class="icon">🔬</span><h3>Personal research lab</h3><p>Hand it a question you've always wondered about and a high effort setting. It will scope the question, decompose it, gather and reconcile sources, and write you the report — the "deep research" experience, on your own terms.</p></div>
+    <div class="card reveal"><span class="icon">🧩</span><h3>Games that remember</h3><p>Persistent memory turns one-off play into campaigns: an interactive-fiction world that evolves across months, a chess coach that knows your blind spots, a puzzle-setter that calibrates to exactly your edge of ability.</p></div>
+    <div class="card reveal"><span class="icon">🛠️</span><h3>Overnight makers</h3><p>Describe the tool you wish existed before bed; review a working build with tests in the morning. Long-horizon autonomy makes "side projects on autopilot" a genuine creative medium — your taste in <em>what to build</em> becomes the craft.</p></div>
+    <div class="card reveal"><span class="icon">🖼️</span><h3>Archive rescue</h3><p>Its degraded-image vision (it crops, rotates, and enhances before reading) makes it a restoration assistant for the unscannable: handwritten recipes, faded ledgers, tilted photos of documents — digitized, transcribed, and organized.</p></div>
+  </div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section id="quiz">
+  <div class="sec-head reveal">
+    <div class="sec-num">06 — CHECK YOUR KNOWLEDGE</div>
+    <h2>Five questions. <em>No stakes.</em></h2>
+    <p>If you can pass this, you know more about driving Fable 5 than most people shipping with it.</p>
+  </div>
+  <div class="quiz reveal" id="quiz-box">
+    <div class="quiz-q" id="qq"></div>
+    <div class="quiz-opts" id="qo"></div>
+    <div class="quiz-exp" id="qe"></div>
+    <div class="quiz-foot">
+      <span class="quiz-score" id="qs">Question 1 / 5</span>
+      <button class="btn btn-gold" id="qnext" style="display:none">Next →</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p style="font-family:var(--serif);font-size:1.4rem;font-style:italic;margin-bottom:14px">Now go give it something <span style="color:var(--gold)">hard</span>.</p>
+  <p>Built with Claude · Model ID <span style="font-family:var(--mono);color:var(--gold)">claude-fable-5</span> · Docs at <a href="https://platform.claude.com/docs" target="_blank" rel="noopener">platform.claude.com</a></p>
+  <p class="fineprint">This is an independent educational guide. Pricing ($10/$50 per 1M tokens), limits, and behavior described here reflect documentation as of mid-2026 and may change — verify against official Anthropic documentation before building. Income figures are illustrative; nothing here is financial advice.</p>
+</footer>
+
+<script>
+/* ---------- constellation canvas ---------- */
+(() => {
+  const c = document.getElementById('constellation');
+  const ctx = c.getContext('2d');
+  let w, h, pts = [], mouse = {x:-999,y:-999};
+  function resize(){ w = c.width = c.offsetWidth; h = c.height = c.offsetHeight;
+    const n = Math.min(110, Math.floor(w*h/14000));
+    pts = Array.from({length:n}, () => ({
+      x: Math.random()*w, y: Math.random()*h,
+      vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+      r: Math.random()*1.6+.4
+    }));
+  }
+  resize(); addEventListener('resize', resize);
+  c.parentElement.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    mouse.x = e.clientX-rect.left; mouse.y = e.clientY-rect.top;
+  });
+  (function loop(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of pts){
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>w)p.vx*=-1; if(p.y<0||p.y>h)p.vy*=-1;
+      const dm = Math.hypot(p.x-mouse.x,p.y-mouse.y);
+      const glow = dm<160 ? (1-dm/160) : 0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r+glow*1.5,0,7);
+      ctx.fillStyle = `rgba(232,176,75,${.25+glow*.6})`; ctx.fill();
+    }
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const a=pts[i],b=pts[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<120){ ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(243,239,230,${(1-d/120)*.10})`; ctx.stroke(); }
+    }
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ---------- scroll progress + nav ---------- */
+const prog = document.getElementById('progress'), nav = document.getElementById('nav');
+addEventListener('scroll', () => {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  prog.style.width = (scrollY/max*100)+'%';
+  nav.classList.toggle('scrolled', scrollY>40);
+}, {passive:true});
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+}), {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ---------- counters ---------- */
+const cio = new IntersectionObserver(es => es.forEach(e => {
+  if(!e.isIntersecting) return;
+  const el = e.target, target = +el.dataset.count, suf = el.dataset.suffix||'';
+  let t0;
+  function step(ts){ if(!t0)t0=ts; const p = Math.min((ts-t0)/1200,1);
+    el.textContent = Math.round(target*(1-Math.pow(1-p,3))) + suf;
+    if(p<1) requestAnimationFrame(step); }
+  requestAnimationFrame(step); cio.unobserve(el);
+}), {threshold:.5});
+document.querySelectorAll('[data-count]').forEach(el => cio.observe(el));
+
+/* ---------- tabs ---------- */
+document.getElementById('hood-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn'); if(!btn) return;
+  document.querySelectorAll('#hood-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+});
+
+/* ---------- effort dial ---------- */
+const EFFORT = [
+  {n:'low — faster than you think', d:'Short, scoped, latency-sensitive work. On Fable 5, low effort often still exceeds the maximum-effort performance of previous-generation models — ideal for sub-agents, classification, and routine pipeline steps.', i:35, s:95, c:95, f:'sub-agents, routine tasks'},
+  {n:'medium — the cost-saver', d:'Routine production work where you want to trim tokens without giving up much. A great setting to A/B against high on routes that complete correctly but take longer than they need to.', i:55, s:80, c:80, f:'high-volume production routes'},
+  {n:'high — the everyday default', d:'The recommended starting point for most tasks. Strong reasoning, excellent verification behavior, and a sensible token bill. Start here, then sweep up or down per route based on your own evals.', i:75, s:55, c:55, f:'most tasks — the default'},
+  {n:'xhigh — for the hard stuff', d:'The setting for the most capability-sensitive workloads: complex coding, long agentic runs, intelligence-bound analysis. Pair with a large max_tokens so it has room to think and act.', i:90, s:35, c:35, f:'coding & long agentic runs'},
+  {n:'max — correctness over everything', d:'Reserve for extremely hard, latency-insensitive problems where being right matters more than cost. Watch for diminishing returns — and for over-delivering beyond the brief.', i:100, s:18, c:18, f:'hardest problems, no rush'},
+];
+document.getElementById('effort-track').addEventListener('click', e => {
+  const stop = e.target.closest('.effort-stop'); if(!stop) return;
+  document.querySelectorAll('.effort-stop').forEach(s=>s.classList.remove('on'));
+  stop.classList.add('on');
+  const d = EFFORT[+stop.dataset.e];
+  document.getElementById('effort-name').textContent = d.n;
+  document.getElementById('effort-desc').textContent = d.d;
+  document.getElementById('m-int').style.width = d.i+'%';
+  document.getElementById('m-spd').style.width = d.s+'%';
+  document.getElementById('m-cst').style.width = d.c+'%';
+  document.getElementById('m-for').textContent = d.f;
+});
+
+/* ---------- calculator ---------- */
+const fmt = n => n>=1000 ? n.toLocaleString('en-US') : ''+n;
+const usd = n => '$' + (n<10 ? n.toFixed(n<0.1?4:2) : n.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}));
+function calc(){
+  const inn = +document.getElementById('r-in').value;
+  const out = +document.getElementById('r-out').value;
+  const req = +document.getElementById('r-req').value;
+  const cache = document.getElementById('c-cache').checked;
+  document.getElementById('v-in').textContent = fmt(inn);
+  document.getElementById('v-out').textContent = fmt(out);
+  document.getElementById('v-req').textContent = fmt(req);
+  // $10/M input, $50/M output; cache: 80% of input at 0.1x
+  const inCost = cache ? (inn*0.2*10 + inn*0.8*1)/1e6 : inn*10/1e6;
+  const outCost = out*50/1e6;
+  const perReq = inCost+outCost;
+  document.getElementById('o-req').textContent = usd(perReq);
+  document.getElementById('o-day').textContent = usd(perReq*req);
+  document.getElementById('o-mo').textContent = usd(perReq*req*30);
+  document.getElementById('o-in').textContent = usd(inCost);
+  document.getElementById('o-out').textContent = usd(outCost);
+}
+['r-in','r-out','r-req','c-cache'].forEach(id => document.getElementById(id).addEventListener('input', calc));
+calc();
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy-btn').forEach(b => b.addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById(b.dataset.copy).innerText).then(()=>{
+    b.textContent='copied ✓'; setTimeout(()=>b.textContent='copy',1500);
+  });
+}));
+
+/* ---------- accordion ---------- */
+document.querySelectorAll('.acc-item').forEach(item => {
+  const head = item.querySelector('.acc-head'), body = item.querySelector('.acc-body');
+  if(item.classList.contains('open')) body.style.maxHeight = body.scrollHeight+'px';
+  head.addEventListener('click', () => {
+    const open = item.classList.toggle('open');
+    body.style.maxHeight = open ? body.scrollHeight+'px' : 0;
+  });
+});
+
+/* ---------- marquee duplication ---------- */
+const track = document.getElementById('marquee-track');
+track.innerHTML += track.innerHTML;
+
+/* ---------- quiz ---------- */
+const QUIZ = [
+  {q:'You want Fable 5 to think harder on a tough problem. What do you do?',
+   o:['Set thinking budget_tokens to 50,000','Raise output_config.effort (e.g. to xhigh)','Add "think step by step" three times','Switch to temperature 0'],
+   a:1, e:'Thinking is always on and adaptive — fixed thinking budgets and sampling params like temperature are rejected on Fable 5. The effort parameter (low → max) is the depth control.'},
+  {q:'Your Fable 5 request returned HTTP 200 but the content array is empty. Most likely cause?',
+   o:['The API is down','You hit the rate limit','stop_reason is "refusal" — a safety classifier declined it','Your prompt was too short'],
+   a:2, e:'Safety declines return a successful 200 with stop_reason: "refusal" and empty content (pre-output refusals aren\'t billed). Always check stop_reason before reading content — and consider a fallback model for false positives.'},
+  {q:'You migrated from Opus and your token bills jumped ~30% for the same prompts. Why?',
+   o:['Fable 5 has a new tokenizer — same text, more tokens','Your cache broke','Thinking tokens are billed double','It\'s a bug'],
+   a:0, e:'Fable 5\'s new tokenizer produces roughly 30% more tokens for the same content vs Opus-tier. Re-baseline with count_tokens (it returns counts under both tokenizers) instead of reusing old budgets.'},
+  {q:'Best way to brief Fable 5 on a big autonomous task?',
+   o:['Drip-feed requirements turn by turn so it doesn\'t get overwhelmed','Give the full spec, intent, and "done" criteria up front in one turn','Keep it vague so it stays creative','Paste only the error message'],
+   a:1, e:'Fable 5\'s long-horizon strength comes from planning against a clear goal. Well-specified single-turn briefs at high effort outperform progressive disclosure — which actually reduces token efficiency and sometimes quality.'},
+  {q:'A prompt that worked great on an older model performs worse on Fable 5. The most likely fix is…',
+   o:['Add more CAPITAL LETTERS and MUST statements','Remove prescriptive step-by-step scaffolding and state the goal instead','Lower max_tokens','Repeat the instructions twice'],
+   a:1, e:'Prompts tuned for prior models are often too prescriptive for Fable 5 and reduce output quality. De-prescribe: goal + constraints, not enumerated steps. A/B it — this is the most common migration win.'},
+];
+let qi=0, qscore=0, qanswered=false;
+const qq=document.getElementById('qq'), qo=document.getElementById('qo'),
+      qe=document.getElementById('qe'), qs=document.getElementById('qs'),
+      qnext=document.getElementById('qnext');
+function renderQ(){
+  qanswered=false; qe.style.display='none'; qnext.style.display='none';
+  const item=QUIZ[qi];
+  qq.textContent=item.q;
+  qs.textContent=`Question ${qi+1} / ${QUIZ.length} · Score ${qscore}`;
+  qo.innerHTML='';
+  item.o.forEach((opt,idx)=>{
+    const b=document.createElement('button'); b.className='quiz-opt'; b.textContent=opt;
+    b.onclick=()=>{
+      if(qanswered) return; qanswered=true;
+      if(idx===item.a){ b.classList.add('right'); qscore++; }
+      else { b.classList.add('wrong'); qo.children[item.a].classList.add('right'); }
+      qe.textContent=item.e; qe.style.display='block';
+      qs.textContent=`Question ${qi+1} / ${QUIZ.length} · Score ${qscore}`;
+      qnext.style.display='inline-block';
+      qnext.textContent = qi===QUIZ.length-1 ? 'See result →' : 'Next →';
+    };
+    qo.appendChild(b);
+  });
+}
+function nextHandler(){
+  if(qi<QUIZ.length-1){ qi++; renderQ(); }
+  else {
+    qq.textContent = qscore===5 ? `Perfect — ${qscore}/5. You're ready to ship with Fable 5.` :
+      qscore>=3 ? `Solid — ${qscore}/5. Skim the Playbook once more and you're set.` :
+      `${qscore}/5 — worth a second pass through "Under the Hood" above.`;
+    qo.innerHTML=''; qe.style.display='none'; qs.textContent='Quiz complete';
+    qnext.textContent='Try again ↺'; qnext.style.display='inline-block';
+    qnext.onclick=()=>{ qi=0; qscore=0; qnext.onclick=nextHandler; renderQ(); };
+  }
+}
+qnext.onclick=nextHandler;
+renderQ();
+</script>
+</body>
+</html>
