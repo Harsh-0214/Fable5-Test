@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0c0b0f;
+  --color-ink-2: #141319;
+  --color-ink-3: #1c1a23;
+  --color-paper: #f3efe6;
+  --color-paper-dim: #c9c3b4;
+  --color-gold: #e8b04b;
+  --color-gold-soft: #f0c97e;
+  --color-ember: #d4663a;
+  --color-teal: #5fb8a5;
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+.hairline {
+  border-color: rgba(243, 239, 230, 0.12);
+}
+
+.card-hover {
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 176, 75, 0.4);
+}
+
+input[type="range"] {
+  accent-color: var(--color-gold);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 38s linear infinite;
+}
+.marquee-pause:hover .animate-marquee {
+  animation-play-state: paused;
+}
